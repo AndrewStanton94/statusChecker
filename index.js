@@ -1,13 +1,16 @@
 const axios = require('axios');
 
 const { chunks } = require('./karataev');
-const { writeCSV } = require('./files');
+const { readFile, writeCSV } = require('./files');
 
 const extractResponseData = (url, response) => {
-	const { status, statusText, request } = response;
+	let { status, statusText, request } = response;
 	const { path } = request;
 
-	console.log(status, statusText, url, path);
+	if (url !== path) {
+		status = 301;
+		statusText = 'Has been redirected';
+	}
 
 	return { url, status, statusText, path };
 };
@@ -18,19 +21,14 @@ const requestURL = (url, instance) =>
 		.then((response) => extractResponseData(url, response))
 		.catch(({ response }) => extractResponseData(url, response));
 
+const urlsFromFile = readFile('data/urlsToCheck.txt').split('\n');
+
 const instance = axios.create({
 	baseURL: 'https://www.port.ac.uk/',
 });
-let urlsToCheck = [
-	'/',
-	'/centre-for-operational-research-and-logistics',
-	'/404',
-];
 
-chunks(urlsToCheck, (url) => requestURL(url, instance)).then((output) => {
-	console.log(output);
-
-	writeCSV('output.csv', output, [
+chunks(urlsFromFile, (url) => requestURL(url, instance)).then((output) => {
+	writeCSV('data/output.csv', output, [
 		{ id: 'url', title: 'url' },
 		{ id: 'status', title: 'status' },
 		{ id: 'statusText', title: 'statusText' },

@@ -1,3 +1,5 @@
+# Don't expose any data used in the program
+data/
 # Logs
 logs
 *.log
